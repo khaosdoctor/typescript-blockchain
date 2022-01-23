@@ -1,12 +1,16 @@
 import { hash, isHashProofed } from './helpers'
 
 export interface Block {
-  sequence: number
-  timestamp: number
-  data: any
-  previousHash: string
-  nonce?: number
-  blockHash?: string
+  header: {
+    nonce: number
+    blockHash: string
+  }
+  payload: {
+    sequence: number
+    timestamp: number
+    data: any
+    previousHash: string
+  }
 }
 
 export class BlockChain {
@@ -18,13 +22,18 @@ export class BlockChain {
   }
 
   private createGenesisBlock () {
-    return {
+    const payload = {
       sequence: 0,
       timestamp: +new Date(),
       data: 'Genesis Block',
-      previousHash: '',
-      nonce: 0,
-      blockHash: ''
+      previousHash: ''
+    }
+    return {
+      header: {
+        nonce: 0,
+        blockHash: hash(JSON.stringify(payload))
+      },
+      payload
     }
   }
 
@@ -37,13 +46,12 @@ export class BlockChain {
   }
 
   private getPreviousBlockHash () {
-    const { nonce, blockHash, ...previousBlock } = this.lastBlock
-    return hash(JSON.stringify(previousBlock))
+    return this.lastBlock.header.blockHash
   }
 
   createBlock (data: any) {
     const newBlock = {
-      sequence: this.lastBlock.sequence + 1,
+      sequence: this.lastBlock.payload.sequence + 1,
       timestamp: +new Date(),
       data,
       previousHash: this.getPreviousBlockHash()
@@ -53,7 +61,7 @@ export class BlockChain {
     return newBlock
   }
 
-  mineBlock (block: Block) {
+  mineBlock (block: Block['payload']) {
     let nonce = 0
     let startTime = +new Date()
 
@@ -73,7 +81,7 @@ export class BlockChain {
         console.log(`Mined block ${block.sequence} in ${mineTime} seconds. Hash: ${shortHash} (${nonce} attempts)`)
 
         return {
-          minedBlock: { ...block, nonce, blockHash },
+          minedBlock: { payload: { ...block }, header: { nonce, blockHash } },
           minedHash: proofingHash,
           shortHash,
           mineTime
@@ -84,19 +92,17 @@ export class BlockChain {
   }
 
   verifyBlock (block: Block) {
-    if (block.previousHash !== this.getPreviousBlockHash()) {
-      console.error(`Invalid block #${block.sequence}: Previous block hash is "${this.getPreviousBlockHash().slice(0, 12)}" not "${block.previousHash.slice(0, 12)}"`)
+    if (block.payload.previousHash !== this.getPreviousBlockHash()) {
+      console.error(`Invalid block #${block.payload.sequence}: Previous block hash is "${this.getPreviousBlockHash().slice(0, 12)}" not "${block.payload.previousHash.slice(0, 12)}"`)
       return
     }
 
-    const { nonce, blockHash, ...blockPayload } = block
-
     if (!isHashProofed({
-      hash: hash(hash(JSON.stringify(blockPayload)) + nonce),
+      hash: hash(hash(JSON.stringify(block.payload)) + block.header.nonce),
       difficulty: this.difficulty,
       prefix: this.powPrefix
     })) {
-      console.error(`Invalid block #${block.sequence}: Hash is not proofed, nonce ${nonce} is not valid`)
+      console.error(`Invalid block #${block.payload.sequence}: Hash is not proofed, nonce ${block.header.nonce} is not valid`)
       return
     }
 
@@ -105,6 +111,7 @@ export class BlockChain {
 
   pushBlock (block: Block) {
     if (this.verifyBlock(block)) this.#chain.push(block)
+    console.log(`Pushed block #${JSON.stringify(block, null, 2)}`)
     return this.#chain
   }
 }
