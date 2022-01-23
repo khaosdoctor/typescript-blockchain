@@ -37,10 +37,13 @@ npm i
 
 ## Uso
 
-É preciso um único parâmetro opcional que é a dificuldade do processo de mineração. O padrão é `4`.
+É preciso dois parâmetro opcionais que são:
+
+- a dificuldade do processo de mineração. O padrão é `4`.
+- o número de blocos a minerar. O padrão é `10`.
 
 ```bash
-npm start [dificuldade = 4]
+npm start [dificuldade = 4] [númeroDeBlocos = 10]
 ```
 
 ## Tarefas de um futuro próximo

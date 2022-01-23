@@ -40,10 +40,13 @@ npm i
 
 ## Usage
 
-It takes a single optional parameter which is the difficulty of the mining process. Default is `4`.
+It takes a two optional parameters which are
+
+- the difficulty of the mining process. Default is `4`.
+- the number of blocks to mine. Default is `10`.
 
 ```bash
-npm start [difficulty = 4]
+npm start [difficulty = 4] [numberOfBlocks = 10]
 ```
 
 ## Forseeable To-Do
